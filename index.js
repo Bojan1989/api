@@ -2,10 +2,16 @@ import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 
-// Ovo će čitati service account JSON iz environment varijable
-const serviceAccount = JSON.parse(
-  process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n')
-);
+// Učitavamo service account iz environment varijable
+let serviceAccount;
+try {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+} catch (err) {
+  console.error("Nevalidan JSON u FIREBASE_SERVICE_ACCOUNT:", err);
+  process.exit(1);
+}
+
+// Inicijalizacija Firebase Admin
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -19,12 +25,15 @@ app.use(express.json());
 
 // POST /scores - dodavanje score-a
 app.post("/scores", async (req, res) => {
+  const { name, points } = req.body;
+  if (!name || points == null) {
+    return res.status(400).json({ error: "Missing name or points" });
+  }
   try {
-    const score = req.body; // { name: string, points: number }
-    const docRef = await scoresCollection.add(score);
-    res.status(201).json({ id: docRef.id, ...score });
+    const docRef = await scoresCollection.add({ name, points });
+    res.status(201).json({ id: docRef.id, name, points });
   } catch (err) {
-    console.error(err);
+    console.error("Greska prilikom dodavanja score-a:", err);
     res.status(500).json({ error: "Failed to add score" });
   }
 });
@@ -32,15 +41,18 @@ app.post("/scores", async (req, res) => {
 // GET /scores - top 10 score-ova
 app.get("/scores", async (req, res) => {
   try {
-    const snapshot = await scoresCollection.orderBy("points", "desc").limit(10).get();
-    const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await scoresCollection
+      .orderBy("points", "desc")
+      .limit(10)
+      .get();
+    const scores = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     res.json(scores);
   } catch (err) {
-    console.error(err);
+    console.error("Greska prilikom dohvatanja score-ova:", err);
     res.status(500).json({ error: "Failed to fetch scores" });
   }
 });
 
+// Port koji Render koristi
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
