@@ -1,20 +1,12 @@
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
+import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
 
-// Učitavamo service account iz environment varijable
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-} catch (err) {
-  console.error("Nevalidan JSON u FIREBASE_SERVICE_ACCOUNT:", err);
-  process.exit(1);
-}
-
-// Inicijalizacija Firebase Admin
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
+
 
 const db = admin.firestore();
 const scoresCollection = db.collection("scores");
@@ -56,3 +48,4 @@ app.get("/scores", async (req, res) => {
 // Port koji Render koristi
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
