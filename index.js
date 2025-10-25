@@ -1,10 +1,9 @@
 import express from "express";
 import cors from "cors";
 import admin from "firebase-admin";
-import fs from "fs";
 
-// Učitaj JSON direktno iz fajla
-const serviceAccount = JSON.parse(fs.readFileSync("./serviceAccountKey.json", "utf8"));
+// Učitaj JSON iz varijable okruženja
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -17,6 +16,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Endpoint za dodavanje score-a
 app.post("/scores", async (req, res) => {
   try {
     const score = req.body;
@@ -28,6 +28,7 @@ app.post("/scores", async (req, res) => {
   }
 });
 
+// Endpoint za listu top 10 score-ova
 app.get("/scores", async (req, res) => {
   try {
     const snapshot = await scoresCollection.orderBy("points", "desc").limit(10).get();
