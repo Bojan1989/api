@@ -3,8 +3,9 @@ import cors from "cors";
 import admin from "firebase-admin";
 
 // Ovo će čitati service account JSON iz environment varijable
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-
+const serviceAccount = JSON.parse(
+  process.env.FIREBASE_SERVICE_ACCOUNT.replace(/\\n/g, '\n')
+);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
@@ -42,3 +43,4 @@ app.get("/scores", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
