@@ -40,7 +40,7 @@ app.get("/scores", async (req, res) => {
   }
 });
 
-app.delete("/scores/cleanup", async (req, res) => {
+app.get("/scores/cleanup", async (req, res) => {
   try {
     // Preuzmi sve rezultate sortirane po poenima (manje poene = bolje)
     const snapshot = await scoresCollection.orderBy("points", "asc").get();
@@ -74,6 +74,7 @@ app.get("/ping", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
 
 
