@@ -40,12 +40,41 @@ app.get("/scores", async (req, res) => {
   }
 });
 
+app.delete("/scores/cleanup", async (req, res) => {
+  try {
+    // Preuzmi sve rezultate sortirane po poenima (manje poene = bolje)
+    const snapshot = await scoresCollection.orderBy("points", "asc").get();
+    const total = snapshot.size;
+
+    // Ako ima 20 ili manje, ne radi ništa
+    if (total <= 20) {
+      return res.json({ message: "Manje od 20 rezultata — ništa nije obrisano." });
+    }
+
+    // Ukloni sve osim prvih 20 sa najmanje poena
+    const docsToDelete = snapshot.docs.slice(20);
+    const batch = db.batch();
+
+    docsToDelete.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+
+    res.json({
+      message: `Obrisano ${docsToDelete.length} rezultata, ostavljeno prvih 20 sa najmanje poena.`,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Neuspešno brisanje rezultata." });
+  }
+});
+
+
 app.get("/ping", (req, res) => {
   res.status(200).send("pong");
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
 
 
