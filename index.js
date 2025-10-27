@@ -31,7 +31,12 @@ app.post("/scores", async (req, res) => {
 // Endpoint za listu top 10 score-ova
 app.get("/scores", async (req, res) => {
   try {
-    const snapshot = await scoresCollection.orderBy("points", "desc").limit(10).get();
+    const snapshot = await scoresCollection
+      .orderBy("points", "asc")     // Prvo po poenima (manje = bolje)
+      .orderBy("attempts", "asc")   // Ako su poeni isti, manje pokušaja = bolje
+      .limit(10)
+      .get();
+
     const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json(scores);
   } catch (err) {
@@ -40,10 +45,14 @@ app.get("/scores", async (req, res) => {
   }
 });
 
+
 app.get("/scores/cleanup", async (req, res) => {
   try {
     // Preuzmi sve rezultate sortirane po poenima (manje poene = bolje)
-    const snapshot = await scoresCollection.orderBy("points", "asc").get();
+    const snapshot = await scoresCollection
+      .orderBy("points", "asc")
+      .orderBy("attempts", "asc")
+      .get();
     const total = snapshot.size;
 
     // Ako ima 20 ili manje, ne radi ništa
@@ -74,6 +83,7 @@ app.get("/ping", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
 
 
 
